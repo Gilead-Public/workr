@@ -6,9 +6,9 @@ testthat::test_that("Qual: Given workflows marked inactive in their metadata, Ma
     bActiveOnly = FALSE
   ))
 
-  expect_false("kri0099" %in% names(wf_default))
-  expect_true("kri0099" %in% names(wf_all))
-  expect_setequal(setdiff(names(wf_all), names(wf_default)), "kri0099")
+  expect_false("ae_retired" %in% names(wf_default))
+  expect_true("ae_retired" %in% names(wf_all))
+  expect_setequal(setdiff(names(wf_all), names(wf_default)), "ae_retired")
   expect_true(all(purrr::map_lgl(wf_default, ~ !isFALSE(.x$meta$Active))))
 })
 
@@ -31,7 +31,7 @@ testthat::test_that("Qual: Given metadata filters, MakeWorkflowList and FilterWo
     GroupLevel = "SITE",
     Abbreviation = "sae"
   ))
-  expect_setequal(names(wf_site_sae), c("kri0002", "kri0002_custom"))
+  expect_identical(names(wf_site_sae), "sae_site")
 
   # workflows lacking the field are dropped
   wf_mapped <- suppressMessages(FilterWorkflows(wf, Type = "Mapped"))

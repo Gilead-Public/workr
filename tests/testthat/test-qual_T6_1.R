@@ -1,46 +1,45 @@
 ## Test Setup
 metric_workflows <- suppressMessages(MakeWorkflowList(
-  c(sprintf("kri%04d", 1:2), sprintf("cou%04d", 1:2)),
+  strNames = I(c("ae_site", "ae_country")),
   strPath = GetYamlPathMetrics()
 ))
 
 ## Test Code
-testthat::test_that("Qual: Given raw data and a list of mapping and metric workflows, RunWorkflows runs them in order and passes earlier results to later workflows (#96, #68)", {
-  test <- suppressMessages(RunWorkflows(c(mappings_wf, metric_workflows), lData))
+testthat::test_that("Qual: Given registered LoadData and SaveData providers, workflows read their inputs from and write their results to the configured storage (#96, #58)", {
+  store <- withr::local_tempdir()
+  saveRDS(mapped_data, file.path(store, "mapped_data.rds"))
 
-  # one result per workflow, named Type_ID, in run order
-  expect_identical(
-    names(test),
-    c(
-      paste0("Mapped_", names(mappings_wf)),
-      paste0("Analysis_", names(metric_workflows))
-    )
+  register_load_provider(
+    "qual.load",
+    function(lWorkflow, lConfig, lData) {
+      c(lData, readRDS(file.path(lConfig$qual$store, "mapped_data.rds")))
+    }
+  )
+  register_save_provider(
+    "qual.save",
+    function(lWorkflow, lConfig) {
+      saveRDS(
+        lWorkflow$lResult,
+        file.path(lConfig$qual$store, paste0(lWorkflow$meta$ID, ".rds"))
+      )
+    }
+  )
+  lConfig <- list(
+    LoadData = "qual.load",
+    SaveData = "qual.save",
+    qual = list(store = store)
   )
 
-  # mapping results are the mapped data frames, matching an independent
-  # derivation from raw data
-  expected_subj <- lData$Raw_SUBJ %>%
-    dplyr::filter(enrollyn == "Y") %>%
-    dplyr::select(subjid, invid, country, timeonstudy)
-  expect_equal(
-    dplyr::arrange(test$Mapped_SUBJ, subjid),
-    dplyr::arrange(expected_subj, subjid),
-    ignore_attr = TRUE
-  )
-  expect_equal(nrow(test$Mapped_AE), nrow(lData$Raw_AE))
+  # no data is passed in directly; the load hook supplies it
+  test <- suppressMessages(RunWorkflows(metric_workflows, lConfig = lConfig))
+  expected <- suppressMessages(RunWorkflows(metric_workflows, mapped_data))
 
-  # metric results are the final step output of each workflow, identical to
-  # running each workflow on its own against the mapped data
+  expect_identical(test, expected)
+
+  # the save hook persisted each workflow's result
   purrr::iwalk(metric_workflows, function(workflow, id) {
-    expect_identical(
-      test[[paste0("Analysis_", id)]],
-      suppressMessages(RunWorkflow(workflow, mapped_data))
-    )
+    saved_path <- file.path(store, paste0(id, ".rds"))
+    expect_true(file.exists(saved_path))
+    expect_identical(readRDS(saved_path), test[[paste0("Analysis_", id)]])
   })
-
-  # serious adverse event metrics see only serious events
-  sae <- qual_double_program_counts(lData, strGroupCol = "invid", bSeriousOnly = TRUE)
-  kri0002 <- dplyr::arrange(test$Analysis_kri0002, GroupID)
-  expect_identical(kri0002$GroupID, sae$GroupID)
-  expect_equal(kri0002$Numerator, sae$Numerator)
 })

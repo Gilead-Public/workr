@@ -1,39 +1,31 @@
 ## Test Setup
-kri_workflow <- suppressMessages(MakeWorkflowList(
-  strNames = "kri0001",
+workflow <- suppressMessages(MakeWorkflowList(
+  strNames = I("ae_site"),
   strPath = GetYamlPathMetrics()
-))[["kri0001"]]
+))[["ae_site"]]
 
-outputs <- qual_step_outputs(kri_workflow)
+outputs <- qual_step_outputs(workflow)
 
 ## Test Code
-testthat::test_that("Qual: Given raw participant-level data, a properly specified Workflow for a KRI creates summarized and flagged data (#96, #68)", {
-  test <- qual_run_workflow(kri_workflow, mapped_data)
+testthat::test_that("Qual: Given raw data, mapping and analysis workflows chain their steps to produce group-level results that match an independent derivation (#96, #68)", {
+  test <- qual_run_workflow(workflow, mapped_data)
   expected <- qual_double_program_counts(lData, strGroupCol = "invid")
-  expected_rows <- length(stats::na.omit(unique(
-    mapped_data$Mapped_SUBJ[[kri_workflow$steps[[2]]$params$strGroupCol]]
-  )))
 
-  # test output structure
+  # every step's output is kept, and the data frames are data frames
   expect_true(all(outputs %in% names(test)))
-  expect_true(is.vector(test$vThreshold))
-  expect_true(all(purrr::map_lgl(
-    test[grep("^Analysis_", outputs, value = TRUE)],
-    is.data.frame
-  )))
-  expect_equal(nrow(test$Analysis_Flagged), expected_rows)
-  expect_equal(nrow(test$Analysis_Summary), expected_rows)
+  expect_true(all(purrr::map_lgl(test[outputs], is.data.frame)))
 
-  # test output content: group-level counts match double-programmed values
-  transformed <- dplyr::arrange(test$Analysis_Transformed, GroupID)
-  expect_identical(transformed$GroupID, expected$GroupID)
-  expect_equal(transformed$Numerator, expected$Numerator)
-  expect_equal(transformed$Denominator, expected$Denominator)
-  expect_equal(transformed$Metric, expected$Metric)
+  # results match counts recomputed with dplyr from raw data, independent of
+  # the mapping SQL and the workflow steps
+  summary <- test$Group_Summary
+  expect_identical(summary$GroupID, expected$GroupID)
+  expect_equal(summary$Numerator, expected$Numerator)
+  expect_equal(summary$Denominator, expected$Denominator)
+  expect_equal(summary$Rate, expected$Rate)
 
   # the final step's output is the workflow's result
   expect_identical(
-    suppressMessages(RunWorkflow(kri_workflow, mapped_data)),
-    test$Analysis_Summary
+    suppressMessages(RunWorkflow(workflow, mapped_data)),
+    test$Group_Summary
   )
 })

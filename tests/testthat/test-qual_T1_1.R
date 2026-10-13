@@ -34,16 +34,17 @@ testthat::test_that("Qual: Given a directory of workflow YAML specifications, Ma
   expect_setequal(names(wf)[priorities == 1], names(mappings_wf))
 })
 
-testthat::test_that("Qual: Given workflow names, MakeWorkflowList loads only the requested workflows (#96, #68)", {
+testthat::test_that("Qual: Given workflow names, MakeWorkflowList loads only the requested workflows, matching partially by default and exactly on request (#96, #68)", {
+  # partial matching: "ae_site" also matches "sae_site"
   wf <- suppressMessages(MakeWorkflowList(
-    strNames = c("kri0001", "cou0002"),
+    strNames = "ae_site",
     strPath = GetYamlPathMetrics()
   ))
-  expect_setequal(names(wf), c("kri0001", "cou0002"))
+  expect_setequal(names(wf), c("ae_site", "sae_site"))
 
   wf_exact <- suppressMessages(MakeWorkflowList(
-    strNames = I("kri0001_custom"),
-    strPath = GetYamlPathCustomMetrics()
+    strNames = I("ae_site"),
+    strPath = GetYamlPathMetrics()
   ))
-  expect_identical(names(wf_exact), "kri0001_custom")
+  expect_identical(names(wf_exact), "ae_site")
 })

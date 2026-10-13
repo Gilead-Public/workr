@@ -1,44 +1,44 @@
 ## Test Setup
-kri_workflow <- suppressMessages(MakeWorkflowList(
-  "kri0001_custom",
-  strPath = GetYamlPathCustomMetrics()
-))[["kri0001_custom"]]
-outputs <- qual_step_outputs(kri_workflow)
+metric_workflows <- suppressMessages(MakeWorkflowList(
+  strPath = GetYamlPathMetrics()
+))
 
 ## Test Code
-testthat::test_that("Qual: Given appropriate metadata (i.e. vThresholds), the thresholds are parsed from metadata and passed to the flagging step (#96, #68)", {
-  test <- qual_run_workflow(kri_workflow, mapped_data)
-  expect_true(all(outputs %in% names(test)))
-  expect_true(is.vector(test[["vThreshold"]]))
-  expect_true(all(purrr::map_lgl(
-    test[grep("^Analysis_", outputs, value = TRUE)],
-    is.data.frame
-  )))
+testthat::test_that("Qual: Given raw data and a list of mapping and metric workflows, RunWorkflows runs them in order and passes earlier results to later workflows (#96, #68)", {
+  test <- suppressMessages(RunWorkflows(c(mappings_wf, metric_workflows), lData))
 
-  # the threshold vector comes from the workflow metadata
+  # one result per workflow, named Type_ID, in run order
   expect_identical(
-    test$vThreshold,
-    as.numeric(strsplit(kri_workflow$meta$Threshold, ",")[[1]])
-  )
-
-  # the flagging step received those thresholds
-  expect_identical(
-    test$Analysis_Flagged,
-    qualification_flag_normalapprox(
-      test$Analysis_Analyzed,
-      threshold = test$vThreshold
+    names(test),
+    c(
+      paste0("Mapped_", names(mappings_wf)),
+      paste0("Analysis_", names(metric_workflows))
     )
   )
 
-  # changing the metadata changes what the flagging step receives
-  kri_workflow$meta$Threshold <- "-3,-2,2,3"
-  test_changed <- qual_run_workflow(kri_workflow, mapped_data)
-  expect_identical(test_changed$vThreshold, c(-3, -2, 2, 3))
-  expect_identical(
-    test_changed$Analysis_Flagged,
-    qualification_flag_normalapprox(
-      test_changed$Analysis_Analyzed,
-      threshold = c(-3, -2, 2, 3)
-    )
+  # mapping results are the mapped data frames, matching an independent
+  # derivation from raw data
+  expected_subj <- lData$Raw_SUBJ %>%
+    dplyr::filter(enrollyn == "Y") %>%
+    dplyr::select(subjid, invid, country, timeonstudy)
+  expect_equal(
+    dplyr::arrange(test$Mapped_SUBJ, subjid),
+    dplyr::arrange(expected_subj, subjid),
+    ignore_attr = TRUE
   )
+  expect_equal(nrow(test$Mapped_AE), nrow(lData$Raw_AE))
+
+  # metric results are the final step output of each workflow, identical to
+  # running each workflow on its own against the mapped data
+  purrr::iwalk(metric_workflows, function(workflow, id) {
+    expect_identical(
+      test[[paste0("Analysis_", id)]],
+      suppressMessages(RunWorkflow(workflow, mapped_data))
+    )
+  })
+
+  # the serious adverse event workflow's extra SQL step is applied
+  sae <- qual_double_program_counts(lData, strGroupCol = "invid", bSeriousOnly = TRUE)
+  expect_identical(test$Analysis_sae_site$GroupID, sae$GroupID)
+  expect_equal(test$Analysis_sae_site$Numerator, sae$Numerator)
 })

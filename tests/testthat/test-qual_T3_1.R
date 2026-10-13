@@ -1,49 +1,37 @@
 ## Test Setup
-ae_workflow <- suppressMessages(MakeWorkflowList(
-  "kri0001b_custom",
-  strPath = GetYamlPathCustomMetrics()
-))[["kri0001b_custom"]]
-
-outputs <- qual_step_outputs(ae_workflow)
-
-# Pre-processed subject-level input, analogous to gsm.core::analyticsInput
-analytics_input <- qual_input_rate(
-  dfSubjects = mapped_data$Mapped_SUBJ,
-  dfNumerator = mapped_data$Mapped_AE
-)
+workflow <- suppressMessages(MakeWorkflowList(
+  strNames = I("ae_site"),
+  strPath = GetYamlPathMetrics()
+))[["ae_site"]]
 
 ## Test Code
-testthat::test_that("Qual: Given pre-processed input data, a properly specified Workflow for a KRI creates summarized and flagged data (#96, #68)", {
-  test <- qual_run_workflow(
-    ae_workflow,
-    list(Analysis_Input = analytics_input)
-  )
+testthat::test_that("Qual: Given workflow metadata referenced by step parameters, the metadata values reach the steps, and changing the metadata changes the results (#96, #68)", {
+  test <- qual_run_workflow(workflow, mapped_data)
 
-  expect_true(all(outputs %in% names(test)))
-  expect_true(is.vector(test$vThreshold))
-  expect_true(all(purrr::map_lgl(
-    test[grep("^Analysis_", outputs, value = TRUE)],
-    is.data.frame
-  )))
-  expect_equal(nrow(test$Analysis_Flagged), nrow(test$Analysis_Summary))
-  expect_identical(
-    sort(test$Analysis_Flagged$GroupID),
-    sort(test$Analysis_Summary$GroupID)
-  )
+  # GroupCol: invid in the metadata sets the grouping column
   expect_setequal(
-    test$Analysis_Summary$GroupID,
-    unique(analytics_input$GroupID)
+    test$Group_Summary$GroupID,
+    unique(mapped_data$Mapped_SUBJ$invid)
   )
 
-  # input data is passed through unchanged
-  expect_identical(test$Analysis_Input, analytics_input)
+  # MinExposure in the metadata sets the cutoff
+  expect_identical(
+    test$Group_Summary$LowExposure,
+    test$Group_Summary$Denominator < workflow$meta$MinExposure
+  )
+  expect_true(any(test$Group_Summary$LowExposure))
+  expect_false(all(test$Group_Summary$LowExposure))
 
-  # starting from pre-processed input gives the same result as running the
-  # equivalent full workflow from mapped data
-  full_workflow <- suppressMessages(MakeWorkflowList(
-    "kri0001_custom",
-    strPath = GetYamlPathCustomMetrics()
-  ))[["kri0001_custom"]]
-  test_full <- qual_run_workflow(full_workflow, mapped_data)
-  expect_identical(test$Analysis_Summary, test_full$Analysis_Summary)
+  # changing the metadata changes what the steps receive
+  workflow$meta$GroupCol <- "country"
+  workflow$meta$MinExposure <- 5000
+  test_changed <- qual_run_workflow(workflow, mapped_data)
+  expected <- qual_double_program_counts(lData, strGroupCol = "country")
+
+  expect_identical(test_changed$Group_Summary$GroupID, expected$GroupID)
+  expect_equal(test_changed$Group_Summary$Denominator, expected$Denominator)
+  expect_identical(
+    test_changed$Group_Summary$LowExposure,
+    test_changed$Group_Summary$Denominator < 5000
+  )
 })

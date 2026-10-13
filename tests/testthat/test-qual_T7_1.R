@@ -1,46 +1,27 @@
 ## Test Setup
-kri_workflow <- suppressMessages(MakeWorkflowList(
-  strNames = "kri0001",
+metric_workflows <- suppressMessages(MakeWorkflowList(
   strPath = GetYamlPathMetrics()
-))[["kri0001"]]
+))
 
 ## Test Code
-testthat::test_that("Qual: Given input data that does not satisfy a workflow's data specification, RunWorkflow stops before running any step (#96, #68)", {
-  # count step calls so we can confirm nothing ran
-  step_calls <- 0
-  traced_workflow <- kri_workflow
-  traced_workflow$steps[[1]]$name <- "qual_counting_step"
-  assign(
-    "qual_counting_step",
-    function(...) {
-      step_calls <<- step_calls + 1
-      qual_parse_threshold(...)
-    },
-    envir = .GlobalEnv
-  )
-  on.exit(rm("qual_counting_step", envir = .GlobalEnv), add = TRUE)
+testthat::test_that("Qual: Given a project directory of workflow phases, RunProject runs the phases in order and makes each phase's results available to later phases (#96, #63, #67)", {
+  test <- suppressMessages(RunProject(
+    GetYamlPathQualWorkflows(),
+    lData = lData,
+    strPhases = c("1_mappings", "2_metrics")
+  ))
 
-  # a spec-declared domain is missing
-  expect_error(
-    suppressMessages(RunWorkflow(traced_workflow, mapped_data["Mapped_SUBJ"])),
-    "Spec-declared input 'Mapped_AE' not found in lData"
-  )
-  expect_identical(step_calls, 0)
+  expect_identical(names(test), c("1_mappings", "2_metrics"))
 
-  # a spec declaring required columns is enforced
-  traced_workflow$spec$Mapped_SUBJ <- list(
-    required_cols = c("subjid", "invid", "timeonstudy")
-  )
-  bad_data <- mapped_data
-  bad_data$Mapped_SUBJ$timeonstudy <- NULL
-  expect_error(
-    suppressMessages(RunWorkflow(traced_workflow, bad_data)),
-    "Missing required columns in 'Mapped_SUBJ': timeonstudy"
-  )
-  expect_identical(step_calls, 0)
+  # the mapping phase reproduces the mapped data
+  expect_identical(test[["1_mappings"]], mapped_data)
 
-  # the same workflow runs once its specification is satisfied
-  result <- suppressMessages(RunWorkflow(traced_workflow, mapped_data))
-  expect_identical(step_calls, 1)
-  expect_s3_class(result, "data.frame")
+  # the metrics phase consumes the mapping phase's results and gives the same
+  # results as running the metric workflows directly against mapped data;
+  # inactive workflows are skipped
+  expect_identical(
+    test[["2_metrics"]],
+    suppressMessages(RunWorkflows(metric_workflows, mapped_data))
+  )
+  expect_false("Analysis_ae_retired" %in% names(test[["2_metrics"]]))
 })

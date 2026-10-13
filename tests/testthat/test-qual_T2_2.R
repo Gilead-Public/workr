@@ -1,41 +1,38 @@
-testthat::test_that("Qual: Given raw participant-level data with missingness, a properly specified Workflow for a KRI creates summarized and flagged data (#96, #68)", {
-  kri_workflow <- suppressMessages(MakeWorkflowList(
-    strNames = "kri0001",
-    strPath = GetYamlPathMetrics()
-  ))[["kri0001"]]
-  outputs <- qual_step_outputs(kri_workflow)
+## Test Setup
+workflow <- suppressMessages(MakeWorkflowList(
+  strNames = I("ae_site"),
+  strPath = GetYamlPathMetrics()
+))[["ae_site"]]
 
+## Test Code
+testthat::test_that("Qual: Given raw data with missing values, the workflows carry the missing values through SQL steps and surface step warnings to the caller (#96, #68)", {
   mapped_data_missing_values <- suppressMessages(
     RunWorkflows(mappings_wf, lData_missing_values)
   )
 
-  expect_warning(
-    test <- qual_run_workflow(kri_workflow, mapped_data_missing_values),
-    "subject\\(s\\) with missing values removed"
+  # missing values survive the SQL mapping unchanged
+  expected_subj <- lData_missing_values$Raw_SUBJ %>%
+    dplyr::filter(enrollyn == "Y") %>%
+    dplyr::select(subjid, invid, country, timeonstudy)
+  expect_equal(
+    dplyr::arrange(mapped_data_missing_values$Mapped_SUBJ, subjid),
+    dplyr::arrange(expected_subj, subjid),
+    ignore_attr = TRUE
   )
+  expect_true(anyNA(mapped_data_missing_values$Mapped_SUBJ$invid))
+
+  # a warning raised inside a step reaches the caller
+  expect_warning(
+    test <- qual_run_workflow(workflow, mapped_data_missing_values),
+    "missing group or exposure removed"
+  )
+
+  # results match counts recomputed with dplyr from the same raw data
   expected <- qual_double_program_counts(
     lData_missing_values,
     strGroupCol = "invid"
   )
-
-  # test output structure
-  expect_true(all(outputs %in% names(test)))
-  expect_true(is.vector(test$vThreshold))
-  expect_true(all(purrr::map_lgl(
-    test[grep("^Analysis_", outputs, value = TRUE)],
-    is.data.frame
-  )))
-  expect_equal(nrow(test$Analysis_Flagged), nrow(expected))
-  expect_equal(nrow(test$Analysis_Summary), nrow(expected))
-  expect_identical(
-    sort(test$Analysis_Flagged$GroupID),
-    sort(test$Analysis_Summary$GroupID)
-  )
-  expect_false(anyNA(test$Analysis_Summary$GroupID))
-
-  # test output content: subjects with missing data are excluded from counts
-  transformed <- dplyr::arrange(test$Analysis_Transformed, GroupID)
-  expect_identical(transformed$GroupID, expected$GroupID)
-  expect_equal(transformed$Numerator, expected$Numerator)
-  expect_equal(transformed$Denominator, expected$Denominator)
+  expect_identical(test$Group_Summary$GroupID, expected$GroupID)
+  expect_equal(test$Group_Summary$Numerator, expected$Numerator)
+  expect_equal(test$Group_Summary$Denominator, expected$Denominator)
 })
