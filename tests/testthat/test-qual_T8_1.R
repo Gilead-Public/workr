@@ -5,7 +5,7 @@ metric_workflows <- suppressMessages(MakeWorkflowList(
 ))
 
 ## Test Code
-testthat::test_that("Qual: Given registered LoadData and SaveData providers, workflows read their inputs from and write their results to the configured storage (#58)", {
+testthat::test_that("Qual: Given registered LoadData and SaveData providers, workflows read their inputs from and write their results to the configured storage (#96, #58)", {
   store <- withr::local_tempdir()
   saveRDS(mapped_data, file.path(store, "mapped_data.rds"))
 

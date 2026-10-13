@@ -5,7 +5,7 @@ kri_workflow <- suppressMessages(MakeWorkflowList(
 ))[["kri0001"]]
 
 ## Test Code
-testthat::test_that("Qual: Given input data that does not satisfy a workflow's data specification, RunWorkflow stops before running any step (#68)", {
+testthat::test_that("Qual: Given input data that does not satisfy a workflow's data specification, RunWorkflow stops before running any step (#96, #68)", {
   # count step calls so we can confirm nothing ran
   step_calls <- 0
   traced_workflow <- kri_workflow

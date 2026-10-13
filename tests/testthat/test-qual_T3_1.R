@@ -13,7 +13,7 @@ analytics_input <- qual_input_rate(
 )
 
 ## Test Code
-testthat::test_that("Qual: Given pre-processed input data, a properly specified Workflow for a KRI creates summarized and flagged data (#68)", {
+testthat::test_that("Qual: Given pre-processed input data, a properly specified Workflow for a KRI creates summarized and flagged data (#96, #68)", {
   test <- qual_run_workflow(
     ae_workflow,
     list(Analysis_Input = analytics_input)

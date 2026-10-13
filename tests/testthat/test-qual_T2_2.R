@@ -1,4 +1,4 @@
-testthat::test_that("Qual: Given raw participant-level data with missingness, a properly specified Workflow for a KRI creates summarized and flagged data (#68)", {
+testthat::test_that("Qual: Given raw participant-level data with missingness, a properly specified Workflow for a KRI creates summarized and flagged data (#96, #68)", {
   kri_workflow <- suppressMessages(MakeWorkflowList(
     strNames = "kri0001",
     strPath = GetYamlPathMetrics()

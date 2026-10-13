@@ -1,3 +1,16 @@
+# workr 1.1.1
+
+## Testing
+
+* Added a qualification test suite (`tests/testthat/test-qual_T*.R`) ported
+  from the `gsm.core` qualification tests that covered the workflow runtime
+  before it moved to `{workr}`. The tests run vendored KRI-style workflows
+  through `RunWorkflow()`, `RunWorkflows()` and `RunProject()` against
+  simulated data and check the results against independently derived values.
+  They also cover workflow loading and filtering, spec enforcement, and
+  load/save hooks. `{workr}` does not depend on `gsm.core` for these tests
+  (#96).
+
 # workr 1.1.0
 
 ## Highlights

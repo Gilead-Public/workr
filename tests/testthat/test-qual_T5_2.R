@@ -17,7 +17,7 @@ partial_mapped_workflows <- purrr::map(kri_workflows, function(workflow) {
 })
 
 ## Test Code
-testthat::test_that("Qual: Given appropriate raw participant-level data, flag values are correctly assigned as NA for sites with low enrollment (#68)", {
+testthat::test_that("Qual: Given appropriate raw participant-level data, flag values are correctly assigned as NA for sites with low enrollment (#96, #68)", {
   # define custom min denominator
   test_nMinDenominator <- c(500, 2000, 5000)
 

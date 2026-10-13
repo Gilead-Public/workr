@@ -40,7 +40,7 @@ check_thresholds <- function(test, workflows) {
 }
 
 ## Test Code -------------------------------------------------------
-testthat::test_that("Qual: Given appropriate metadata (i.e. vThresholds), bounds are properly applied to generate flags (#68)", {
+testthat::test_that("Qual: Given appropriate metadata (i.e. vThresholds), bounds are properly applied to generate flags (#96, #68)", {
   # default ---------------------------------
   test <- purrr::map(kri_workflows, ~ qual_run_workflow(.x, mapped_data))
   check_outputs(test, outputs)

@@ -1,5 +1,5 @@
 ## Test Code
-testthat::test_that("Qual: Given workflows marked inactive in their metadata, MakeWorkflowList excludes them by default and includes them on request (#53)", {
+testthat::test_that("Qual: Given workflows marked inactive in their metadata, MakeWorkflowList excludes them by default and includes them on request (#96, #53)", {
   wf_default <- suppressMessages(MakeWorkflowList(strPath = GetYamlPathMetrics()))
   wf_all <- suppressMessages(MakeWorkflowList(
     strPath = GetYamlPathMetrics(),
@@ -12,7 +12,7 @@ testthat::test_that("Qual: Given workflows marked inactive in their metadata, Ma
   expect_true(all(purrr::map_lgl(wf_default, ~ !isFALSE(.x$meta$Active))))
 })
 
-testthat::test_that("Qual: Given metadata filters, MakeWorkflowList and FilterWorkflows keep only workflows whose metadata match, case-insensitively (#72)", {
+testthat::test_that("Qual: Given metadata filters, MakeWorkflowList and FilterWorkflows keep only workflows whose metadata match, case-insensitively (#96, #72)", {
   wf <- suppressMessages(MakeWorkflowList(strPath = GetYamlPathQualWorkflows()))
 
   # filter at load time

@@ -5,7 +5,7 @@ metric_workflows <- suppressMessages(MakeWorkflowList(
 ))
 
 ## Test Code
-testthat::test_that("Qual: Given workflows whose required inputs are not yet available, RunWorkflows stops by default and, when asked to continue on error, records the failure and runs the remaining workflows (#67)", {
+testthat::test_that("Qual: Given workflows whose required inputs are not yet available, RunWorkflows stops by default and, when asked to continue on error, records the failure and runs the remaining workflows (#96, #67)", {
   # metrics placed ahead of the mappings they depend on
   out_of_order <- c(metric_workflows["kri0001"], mappings_wf)
 

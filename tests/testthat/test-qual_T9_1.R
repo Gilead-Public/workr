@@ -4,7 +4,7 @@ metric_workflows <- suppressMessages(MakeWorkflowList(
 ))
 
 ## Test Code
-testthat::test_that("Qual: Given a project directory of workflow phases, RunProject runs the phases in order and makes each phase's results available to later phases (#63, #67)", {
+testthat::test_that("Qual: Given a project directory of workflow phases, RunProject runs the phases in order and makes each phase's results available to later phases (#96, #63, #67)", {
   test <- suppressMessages(RunProject(
     GetYamlPathQualWorkflows(),
     lData = lData,

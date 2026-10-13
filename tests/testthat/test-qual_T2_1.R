@@ -7,7 +7,7 @@ kri_workflow <- suppressMessages(MakeWorkflowList(
 outputs <- qual_step_outputs(kri_workflow)
 
 ## Test Code
-testthat::test_that("Qual: Given raw participant-level data, a properly specified Workflow for a KRI creates summarized and flagged data (#68)", {
+testthat::test_that("Qual: Given raw participant-level data, a properly specified Workflow for a KRI creates summarized and flagged data (#96, #68)", {
   test <- qual_run_workflow(kri_workflow, mapped_data)
   expected <- qual_double_program_counts(lData, strGroupCol = "invid")
   expected_rows <- length(stats::na.omit(unique(

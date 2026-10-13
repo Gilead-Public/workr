@@ -6,7 +6,7 @@ kri_workflow <- suppressMessages(MakeWorkflowList(
 outputs <- qual_step_outputs(kri_workflow)
 
 ## Test Code
-testthat::test_that("Qual: Given appropriate metadata (i.e. vThresholds), flagged observations are properly marked in summary data (#68)", {
+testthat::test_that("Qual: Given appropriate metadata (i.e. vThresholds), flagged observations are properly marked in summary data (#96, #68)", {
   test <- qual_run_workflow(kri_workflow, mapped_data)
   expect_true(all(outputs %in% names(test)))
   expect_true(is.vector(test[["vThreshold"]]))

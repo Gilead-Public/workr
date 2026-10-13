@@ -5,7 +5,7 @@ metric_workflows <- suppressMessages(MakeWorkflowList(
 ))
 
 ## Test Code
-testthat::test_that("Qual: Given raw data and a list of mapping and metric workflows, RunWorkflows runs them in order and passes earlier results to later workflows (#68)", {
+testthat::test_that("Qual: Given raw data and a list of mapping and metric workflows, RunWorkflows runs them in order and passes earlier results to later workflows (#96, #68)", {
   test <- suppressMessages(RunWorkflows(c(mappings_wf, metric_workflows), lData))
 
   # one result per workflow, named Type_ID, in run order

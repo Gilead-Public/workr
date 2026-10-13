@@ -10,7 +10,7 @@ names(raw_yaml) <- purrr::map_chr(raw_yaml, c("meta", "ID"))
 active_ids <- names(purrr::discard(raw_yaml, ~ isFALSE(.x$meta$Active)))
 
 ## Test Code
-testthat::test_that("Qual: Given a directory of workflow YAML specifications, MakeWorkflowList loads every active workflow keyed by its ID with meta, spec and steps intact (#68)", {
+testthat::test_that("Qual: Given a directory of workflow YAML specifications, MakeWorkflowList loads every active workflow keyed by its ID with meta, spec and steps intact (#96, #68)", {
   wf <- suppressMessages(MakeWorkflowList(strPath = GetYamlPathQualWorkflows()))
 
   # one entry per active YAML, named by meta$ID
@@ -34,7 +34,7 @@ testthat::test_that("Qual: Given a directory of workflow YAML specifications, Ma
   expect_setequal(names(wf)[priorities == 1], names(mappings_wf))
 })
 
-testthat::test_that("Qual: Given workflow names, MakeWorkflowList loads only the requested workflows (#68)", {
+testthat::test_that("Qual: Given workflow names, MakeWorkflowList loads only the requested workflows (#96, #68)", {
   wf <- suppressMessages(MakeWorkflowList(
     strNames = c("kri0001", "cou0002"),
     strPath = GetYamlPathMetrics()
