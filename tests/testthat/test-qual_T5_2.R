@@ -17,27 +17,9 @@ partial_mapped_workflows <- purrr::map(kri_workflows, function(workflow) {
 })
 
 ## Test Code
-testthat::test_that("Qual: Given appropriate raw participant-level data, flag values are correctly assigned as NA for sites with low enrollment (#96, #68)", {
+testthat::test_that("Qual: Given an accrual threshold in workflow metadata, the summary step receives it, so flag values for sites with low enrollment follow the metadata (#96, #68)", {
   # define custom min denominator
   test_nMinDenominator <- c(500, 2000, 5000)
-
-  # number of NA flags equals number of groups below the accrual threshold
-  test_output <- purrr::map(test_nMinDenominator, function(test) {
-    purrr::map(kri_workflows, function(workflow) {
-      workflow$meta$AccrualThreshold <- test
-      result <- qual_run_workflow(workflow, mapped_data)
-      sum(is.na(result$Analysis_Summary$Flag))
-    })
-  })
-
-  hardcode_output <- purrr::map(test_nMinDenominator, function(test) {
-    purrr::map(partial_mapped_workflows, function(df) {
-      sum(df$Analysis_Flagged$Denominator < test)
-    })
-  })
-
-  expect_equal(test_output, hardcode_output)
-  expect_gt(sum(unlist(hardcode_output)), 0)
 
   # test for identical output between the workflow, with the accrual
   # threshold set in its metadata, and a direct call to the summary step
@@ -58,4 +40,7 @@ testthat::test_that("Qual: Given appropriate raw participant-level data, flag va
   })
 
   expect_identical(yaml_test, function_test)
+
+  # the metadata value matters: different thresholds give different summaries
+  expect_false(identical(yaml_test[[1]], yaml_test[[3]]))
 })

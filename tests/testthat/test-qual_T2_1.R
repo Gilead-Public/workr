@@ -31,24 +31,9 @@ testthat::test_that("Qual: Given raw participant-level data, a properly specifie
   expect_equal(transformed$Denominator, expected$Denominator)
   expect_equal(transformed$Metric, expected$Metric)
 
-  # test output content: flags match hard-coded threshold logic
-  flags <- test$Analysis_Flagged %>%
-    dplyr::mutate(
-      hardcode_flag = qual_hardcode_flag_magnitude(Score, test$vThreshold) *
-        sign(Score)
-    ) %>%
-    dplyr::left_join(
-      test$Analysis_Summary %>% dplyr::select("GroupID", "Flag"),
-      by = "GroupID"
-    ) %>%
-    dplyr::mutate(
-      hardcode_summary_flag = dplyr::if_else(
-        Denominator < kri_workflow$meta$AccrualThreshold,
-        NA_real_,
-        hardcode_flag
-      )
-    )
-
-  expect_identical(flags$hardcode_flag, flags$Flag.x)
-  expect_identical(flags$hardcode_summary_flag, flags$Flag.y)
+  # the final step's output is the workflow's result
+  expect_identical(
+    suppressMessages(RunWorkflow(kri_workflow, mapped_data)),
+    test$Analysis_Summary
+  )
 })

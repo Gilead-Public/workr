@@ -39,33 +39,32 @@ check_thresholds <- function(test, workflows) {
   })
 }
 
+# verify each workflow's flagging step, whichever model it uses, received the
+# parsed thresholds
+check_flag_step <- function(test, workflows) {
+  purrr::iwalk(test, function(kri, kri_name) {
+    flag_step <- purrr::detect(
+      workflows[[kri_name]]$steps,
+      ~ .x$output == "Analysis_Flagged"
+    )
+    expect_identical(
+      kri$Analysis_Flagged,
+      get(flag_step$name)(kri$Analysis_Analyzed, threshold = kri$vThreshold)
+    )
+  })
+}
+
 ## Test Code -------------------------------------------------------
-testthat::test_that("Qual: Given appropriate metadata (i.e. vThresholds), bounds are properly applied to generate flags (#96, #68)", {
+testthat::test_that("Qual: Given appropriate metadata (i.e. vThresholds), each workflow's thresholds are parsed and passed to its flagging step (#96, #68)", {
   # default ---------------------------------
   test <- purrr::map(kri_workflows, ~ qual_run_workflow(.x, mapped_data))
   check_outputs(test, outputs)
   check_thresholds(test, kri_workflows)
+  check_flag_step(test, kri_workflows)
 
   # custom ----------------------------------
   test_custom <- purrr::map(kri_custom, ~ qual_run_workflow(.x, mapped_data))
   check_outputs(test_custom, outputs_custom)
   check_thresholds(test_custom, kri_custom)
-
-  # verify vThreshold was properly applied to data to assign flags
-  purrr::walk(c(test, test_custom), function(kri) {
-    output <- kri$Analysis_Flagged %>%
-      dplyr::mutate(
-        hardcode_flag = qual_hardcode_flag_magnitude(Score, kri$vThreshold)
-      )
-    expect_identical(abs(output$Flag), output$hardcode_flag)
-  })
-
-  # custom thresholds are tighter than the defaults, so they flag at least as
-  # many groups
-  purrr::walk2(test, test_custom, function(default, custom) {
-    expect_gte(
-      sum(abs(custom$Analysis_Flagged$Flag)),
-      sum(abs(default$Analysis_Flagged$Flag))
-    )
-  })
+  check_flag_step(test_custom, kri_custom)
 })

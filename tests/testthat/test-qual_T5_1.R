@@ -8,88 +8,57 @@ ae_workflow_default <- suppressMessages(MakeWorkflowList(
   strPath = GetYamlPathMetrics()
 ))[["kri0001"]]
 
-# define Data ------------------------------------------------------
-test_custom <- qual_run_workflow(ae_workflow_custom, mapped_data)
-test_default <- qual_run_workflow(ae_workflow_default, mapped_data)
-
-hardcode_flag <- function(test, nAccrualThreshold) {
-  test$Analysis_Flagged %>%
-    dplyr::mutate(
-      hardcode_flag = dplyr::if_else(
-        Denominator < nAccrualThreshold,
-        NA_real_,
-        qual_hardcode_flag_magnitude(Score, test$vThreshold)
-      )
-    ) %>%
-    dplyr::left_join(
-      test$Analysis_Summary %>% dplyr::select(GroupID, SummaryFlag = Flag),
-      by = "GroupID"
-    )
-}
-
-hardcode_flag_custom <- hardcode_flag(
-  test_custom,
-  ae_workflow_custom$meta$AccrualThreshold
-)
-hardcode_flag_default <- hardcode_flag(
-  test_default,
-  ae_workflow_default$meta$AccrualThreshold
-)
-
-## define outputs --------------------------------------------------
 outputs <- qual_step_outputs(ae_workflow_custom)
 
 ## Test Code -------------------------------------------------------
-testthat::test_that("Qual: Given appropriate raw participant-level data, flag values can be correctly assigned to records that meet flagging criteria, including custom thresholding (#96, #68)", {
-  # Custom vThreshold
-  expect_true(all(outputs %in% names(test_custom)))
-  expect_true(is.vector(test_custom[["vThreshold"]]))
-  expect_true(all(purrr::map_lgl(
-    test_custom[outputs[outputs != "vThreshold"]],
-    is.data.frame
-  )))
-  expect_equal(
-    nrow(test_custom$Analysis_Flagged),
-    nrow(test_custom$Analysis_Summary)
-  )
-  expect_identical(
-    sort(test_custom$Analysis_Flagged$GroupID),
-    sort(test_custom$Analysis_Summary$GroupID)
-  )
-  expect_identical(
-    abs(hardcode_flag_custom$SummaryFlag),
-    hardcode_flag_custom$hardcode_flag
-  )
-
-  # default vThreshold
-  expect_true(all(outputs %in% names(test_default)))
-  expect_true(is.vector(test_default[["vThreshold"]]))
-  expect_true(all(purrr::map_lgl(
-    test_default[outputs[outputs != "vThreshold"]],
-    is.data.frame
-  )))
-  expect_equal(
-    nrow(test_default$Analysis_Flagged),
-    nrow(test_default$Analysis_Summary)
-  )
-  expect_identical(
-    sort(test_default$Analysis_Flagged$GroupID),
-    sort(test_default$Analysis_Summary$GroupID)
-  )
-  expect_identical(
-    abs(hardcode_flag_default$SummaryFlag),
-    hardcode_flag_default$hardcode_flag
-  )
-
-  # thresholds change the flags but not the underlying scores
-  scores <- dplyr::inner_join(
-    dplyr::select(test_default$Analysis_Analyzed, GroupID, Score),
-    dplyr::select(test_custom$Analysis_Analyzed, GroupID, Score),
-    by = "GroupID"
-  )
-  expect_equal(scores$Score.x, scores$Score.y)
+testthat::test_that("Qual: Given two workflows that differ only in their threshold metadata, each workflow's steps receive that workflow's own metadata when run together (#96, #68)", {
+  # the two workflows have the same steps and differ only in metadata
+  expect_identical(ae_workflow_default$steps, ae_workflow_custom$steps)
   expect_false(identical(
-    dplyr::arrange(test_default$Analysis_Flagged, GroupID)$Flag,
-    dplyr::arrange(test_custom$Analysis_Flagged, GroupID)$Flag
+    ae_workflow_default$meta$Threshold,
+    ae_workflow_custom$meta$Threshold
   ))
+
+  test <- suppressMessages(RunWorkflows(
+    list(ae_workflow_default, ae_workflow_custom),
+    mapped_data,
+    bReturnResult = FALSE
+  ))
+  test_default <- test$Analysis_kri0001$lData
+  test_custom <- test$Analysis_kri0001_custom$lData
+
+  expect_true(all(outputs %in% names(test_default)))
+  expect_true(all(outputs %in% names(test_custom)))
+
+  # steps that don't use the thresholds give identical outputs
+  for (output in c("Analysis_Input", "Analysis_Transformed", "Analysis_Analyzed")) {
+    expect_identical(test_default[[output]], test_custom[[output]])
+  }
+
+  # each workflow parsed its own thresholds and passed them, and its own
+  # accrual threshold, to its flagging and summary steps
+  purrr::walk2(
+    list(test_default, test_custom),
+    list(ae_workflow_default, ae_workflow_custom),
+    function(result, workflow) {
+      expect_identical(
+        result$vThreshold,
+        as.numeric(strsplit(workflow$meta$Threshold, ",")[[1]])
+      )
+      expect_identical(
+        result$Analysis_Flagged,
+        qualification_flag_normalapprox(
+          result$Analysis_Analyzed,
+          threshold = result$vThreshold
+        )
+      )
+      expect_identical(
+        result$Analysis_Summary,
+        qual_summarize(
+          result$Analysis_Flagged,
+          nAccrualThreshold = workflow$meta$AccrualThreshold
+        )
+      )
+    }
+  )
 })

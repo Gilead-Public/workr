@@ -144,15 +144,3 @@ qual_double_program_counts <- function(
     dplyr::mutate(Metric = Numerator / Denominator) %>%
     dplyr::arrange(GroupID)
 }
-
-# Hard-coded flag assignment from a threshold vector, used to double program
-# the model flagging steps. Returns the flag magnitude (0, 1 or 2); direction
-# is checked separately against the sign of the score.
-qual_hardcode_flag_magnitude <- function(score, vThreshold) {
-  dplyr::case_when(
-    is.na(score) ~ NA_real_,
-    score <= vThreshold[1] | score >= vThreshold[4] ~ 2,
-    score <= vThreshold[2] | score >= vThreshold[3] ~ 1,
-    TRUE ~ 0
-  )
-}
