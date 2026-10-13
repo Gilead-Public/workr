@@ -26,7 +26,13 @@ testthat::test_that("Qual: Given raw data and a list of mapping and metric workf
     dplyr::arrange(expected_subj, subjid),
     ignore_attr = TRUE
   )
-  expect_equal(nrow(test$Mapped_AE), nrow(lData$Raw_AE))
+  expected_ae <- lData$Raw_AE %>%
+    dplyr::select(subjid, aeser, aest_dt)
+  expect_equal(
+    dplyr::arrange(test$Mapped_AE, subjid, aeser, aest_dt),
+    dplyr::arrange(expected_ae, subjid, aeser, aest_dt),
+    ignore_attr = TRUE
+  )
 
   # metric results are the final step output of each workflow, identical to
   # running each workflow on its own against the mapped data
