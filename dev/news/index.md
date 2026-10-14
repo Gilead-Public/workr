@@ -1,5 +1,24 @@
 # Changelog
 
+## workr 1.1.1
+
+### Testing
+
+- Added a qualification test suite (`tests/testthat/test-qual_T*.R`) for
+  the workflow runtime, following the conventions of the `gsm.core`
+  qualification tests. It covers workflow loading and filtering; running
+  steps; passing data and metadata to steps;
+  [`RunWorkflows()`](https://gilead-public.github.io/workr/dev/reference/RunWorkflows.md)
+  and
+  [`RunProject()`](https://gilead-public.github.io/workr/dev/reference/RunProject.md)
+  orchestration; spec enforcement; and load/save hooks. The test
+  workflows use simulated data,
+  [`RunQuery()`](https://gilead-public.github.io/workr/dev/reference/RunQuery.md)
+  SQL and small domain-neutral step functions, and results are checked
+  against values derived independently from the raw data. The suite does
+  not depend on `gsm.core` or use any of its analytics
+  ([\#96](https://github.com/Gilead-Public/workr/issues/96)).
+
 ## workr 1.1.0
 
 ### Highlights
