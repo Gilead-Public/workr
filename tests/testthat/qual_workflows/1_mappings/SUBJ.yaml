@@ -1,0 +1,23 @@
+meta:
+  Type: Mapped
+  ID: SUBJ
+  Description: Subject Data Mapping
+  Priority: 1
+spec:
+  Raw_SUBJ:
+    subjid:
+      type: character
+    invid:
+      type: character
+    country:
+      type: character
+    enrollyn:
+      type: character
+    timeonstudy:
+      type: integer
+steps:
+  - output: Mapped_SUBJ
+    name: workr::RunQuery
+    params:
+      df: Raw_SUBJ
+      strQuery: "SELECT subjid, invid, country, timeonstudy FROM df WHERE enrollyn = 'Y'"
