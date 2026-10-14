@@ -1,0 +1,32 @@
+meta:
+  Type: Analysis
+  ID: ae_site_from_input
+  Description: Adverse event rate by site, starting from subject-level input
+  GroupLevel: Site
+  Abbreviation: AE
+  GroupCol: invid
+  MinExposure: 1000
+  Priority: 2
+spec:
+  Subject_Events:
+    subjid:
+      type: character
+    invid:
+      type: character
+    timeonstudy:
+      type: integer
+    n_events:
+      type: numeric
+steps:
+  - output: Group_Rates
+    name: qual_rate_by_group
+    params:
+      dfInput: Subject_Events
+      strGroupCol: GroupCol
+      strCountCol: n_events
+      strExposureCol: timeonstudy
+  - output: Group_Summary
+    name: qual_mark_low_exposure
+    params:
+      dfInput: Group_Rates
+      nMinExposure: MinExposure

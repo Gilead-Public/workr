@@ -1,0 +1,41 @@
+meta:
+  Type: Analysis
+  ID: ae_retired
+  Description: Retired adverse event rate by site
+  GroupLevel: Site
+  Abbreviation: AE
+  GroupCol: invid
+  MinExposure: 1000
+  Priority: 2
+  Active: false
+spec:
+  Mapped_AE:
+    subjid:
+      type: character
+  Mapped_SUBJ:
+    subjid:
+      type: character
+    invid:
+      type: character
+    timeonstudy:
+      type: integer
+steps:
+  - output: Event_Counts
+    name: workr::RunQuery
+    params:
+      df: Mapped_AE
+      strQuery: "SELECT subjid, COUNT(*) AS n_events FROM df GROUP BY subjid ORDER BY subjid"
+  - output: Subject_Events
+    name: base::merge
+    params:
+      x: Mapped_SUBJ
+      "y": Event_Counts
+      by: subjid
+      all.x: true
+  - output: Group_Rates
+    name: qual_rate_by_group
+    params:
+      dfInput: Subject_Events
+      strGroupCol: GroupCol
+      strCountCol: n_events
+      strExposureCol: timeonstudy
