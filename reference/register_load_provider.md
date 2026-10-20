@@ -3,10 +3,10 @@
 **\[stable\]**
 
 Register a named `LoadData` provider for use by
-[`RunWorkflow()`](https://gilead-biostats.github.io/workr/reference/RunWorkflow.md),
-[`RunWorkflows()`](https://gilead-biostats.github.io/workr/reference/RunWorkflows.md),
+[`RunWorkflow()`](https://gilead-public.github.io/workr/reference/RunWorkflow.md),
+[`RunWorkflows()`](https://gilead-public.github.io/workr/reference/RunWorkflows.md),
 and
-[`DemoApp_Server()`](https://gilead-biostats.github.io/workr/reference/DemoApp_Server.md).
+[`DemoApp_Server()`](https://gilead-public.github.io/workr/reference/DemoApp_Server.md).
 Registered providers can be referenced from `lConfig$LoadData` with a
 single character string.
 

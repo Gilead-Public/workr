@@ -2,7 +2,7 @@
 
 Reads a manifest.csv and returns a character vector of GitHub refs
 formatted for use with
-[`pkgManifest()`](https://gilead-biostats.github.io/workr/reference/pkgManifest.md).
+[`pkgManifest()`](https://gilead-public.github.io/workr/reference/pkgManifest.md).
 
 ## Usage
 

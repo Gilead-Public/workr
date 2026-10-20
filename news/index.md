@@ -1,5 +1,24 @@
 # Changelog
 
+## workr 1.1.1
+
+### Testing
+
+- Added a qualification test suite (`tests/testthat/test-qual_T*.R`) for
+  the workflow runtime, following the conventions of the `gsm.core`
+  qualification tests. It covers workflow loading and filtering; running
+  steps; passing data and metadata to steps;
+  [`RunWorkflows()`](https://gilead-public.github.io/workr/reference/RunWorkflows.md)
+  and
+  [`RunProject()`](https://gilead-public.github.io/workr/reference/RunProject.md)
+  orchestration; spec enforcement; and load/save hooks. The test
+  workflows use simulated data,
+  [`RunQuery()`](https://gilead-public.github.io/workr/reference/RunQuery.md)
+  SQL and small domain-neutral step functions, and results are checked
+  against values derived independently from the raw data. The suite does
+  not depend on `gsm.core` or use any of its analytics
+  ([\#96](https://github.com/Gilead-Public/workr/issues/96)).
+
 ## workr 1.1.0
 
 ### Highlights
@@ -26,7 +45,7 @@
   behavior.
 
 - Fixed schema-enforced timestamp parsing in
-  [`RunQuery()`](https://gilead-biostats.github.io/workr/reference/RunQuery.md)
+  [`RunQuery()`](https://gilead-public.github.io/workr/reference/RunQuery.md)
   when inputs mix Date and POSIXct-like values.
 
 ## workr 1.0.0
@@ -38,31 +57,31 @@ step-by-step R data pipelines using YAML-defined workflows.
 
 #### Core Features
 
-- [`RunStep()`](https://gilead-biostats.github.io/workr/reference/RunStep.md)
+- [`RunStep()`](https://gilead-public.github.io/workr/reference/RunStep.md)
   — execute a single workflow step
-- [`RunWorkflow()`](https://gilead-biostats.github.io/workr/reference/RunWorkflow.md)
+- [`RunWorkflow()`](https://gilead-public.github.io/workr/reference/RunWorkflow.md)
   — execute a full workflow specification (YAML)
-- [`RunWorkflows()`](https://gilead-biostats.github.io/workr/reference/RunWorkflows.md)
+- [`RunWorkflows()`](https://gilead-public.github.io/workr/reference/RunWorkflows.md)
   — run multiple workflows in sequence
-- [`RunProject()`](https://gilead-biostats.github.io/workr/reference/RunProject.md)
+- [`RunProject()`](https://gilead-public.github.io/workr/reference/RunProject.md)
   — orchestrate multi-phase workflow pipelines (experimental)
-- [`MakeWorkflowList()`](https://gilead-biostats.github.io/workr/reference/MakeWorkflowList.md)
+- [`MakeWorkflowList()`](https://gilead-public.github.io/workr/reference/MakeWorkflowList.md)
   — read a folder of YAML workflows into a list
-- [`RunQuery()`](https://gilead-biostats.github.io/workr/reference/RunQuery.md)
+- [`RunQuery()`](https://gilead-public.github.io/workr/reference/RunQuery.md)
   — execute database queries via DBI/duckdb
-- [`loadExample()`](https://gilead-biostats.github.io/workr/reference/loadExample.md)
+- [`loadExample()`](https://gilead-public.github.io/workr/reference/loadExample.md)
   — load bundled example workflows for learning and testing
 
 #### Shiny Demo App
 
-- [`DemoApp_init()`](https://gilead-biostats.github.io/workr/reference/DemoApp_init.md)
+- [`DemoApp_init()`](https://gilead-public.github.io/workr/reference/DemoApp_init.md)
   — launch an interactive Shiny app for exploring and running workflows
 - Hosted version available at
   [jwildfire.shinyapps.io/workr-demoapp](https://jwildfire.shinyapps.io/workr-demoapp/)
 
 #### Package Manifests
 
-- [`pkgManifest()`](https://gilead-biostats.github.io/workr/reference/pkgManifest.md)
+- [`pkgManifest()`](https://gilead-public.github.io/workr/reference/pkgManifest.md)
   — resolve GitHub packages to pinned versions with manifest.csv and
   rproject.toml
 - Snapshot branches (`ss-*`) for reproducible package environments
