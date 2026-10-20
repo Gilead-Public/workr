@@ -1,0 +1,50 @@
+## Test Setup
+metric_workflows <- suppressMessages(MakeWorkflowList(
+  strPath = GetYamlPathMetrics()
+))
+
+## Test Code
+testthat::test_that("Qual: Given raw data and a list of mapping and metric workflows, RunWorkflows runs them in order and passes earlier results to later workflows (#96, #68)", {
+  test <- suppressMessages(RunWorkflows(c(mappings_wf, metric_workflows), lData))
+
+  # one result per workflow, named Type_ID, in run order
+  expect_identical(
+    names(test),
+    c(
+      paste0("Mapped_", names(mappings_wf)),
+      paste0("Analysis_", names(metric_workflows))
+    )
+  )
+
+  # mapping results are the mapped data frames, matching an independent
+  # derivation from raw data
+  expected_subj <- lData$Raw_SUBJ %>%
+    dplyr::filter(enrollyn == "Y") %>%
+    dplyr::select(subjid, invid, country, timeonstudy)
+  expect_equal(
+    dplyr::arrange(test$Mapped_SUBJ, subjid),
+    dplyr::arrange(expected_subj, subjid),
+    ignore_attr = TRUE
+  )
+  expected_ae <- lData$Raw_AE %>%
+    dplyr::select(subjid, aeser, aest_dt)
+  expect_equal(
+    dplyr::arrange(test$Mapped_AE, subjid, aeser, aest_dt),
+    dplyr::arrange(expected_ae, subjid, aeser, aest_dt),
+    ignore_attr = TRUE
+  )
+
+  # metric results are the final step output of each workflow, identical to
+  # running each workflow on its own against the mapped data
+  purrr::iwalk(metric_workflows, function(workflow, id) {
+    expect_identical(
+      test[[paste0("Analysis_", id)]],
+      suppressMessages(RunWorkflow(workflow, mapped_data))
+    )
+  })
+
+  # the serious adverse event workflow's extra SQL step is applied
+  sae <- qual_double_program_counts(lData, strGroupCol = "invid", bSeriousOnly = TRUE)
+  expect_identical(test$Analysis_sae_site$GroupID, sae$GroupID)
+  expect_equal(test$Analysis_sae_site$Numerator, sae$Numerator)
+})

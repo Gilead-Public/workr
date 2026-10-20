@@ -1,0 +1,19 @@
+meta:
+  Type: Mapped
+  ID: AE
+  Description: Adverse Event Data Mapping
+  Priority: 1
+spec:
+  Raw_AE:
+    subjid:
+      type: character
+    aeser:
+      type: character
+    aest_dt:
+      type: Date
+steps:
+  - output: Mapped_AE
+    name: workr::RunQuery
+    params:
+      df: Raw_AE
+      strQuery: "SELECT subjid, aeser, aest_dt FROM df"
